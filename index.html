@@ -20,6 +20,7 @@ async function derive(pw, salt) {
 }
 async function show(key, p) {
   const plain = await crypto.subtle.decrypt({name: "AES-GCM", iv: p.iv}, key, p.ct);
+  sessionStorage.setItem(STORE, btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.exportKey("raw", key)))));
   const html = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
   document.open(); document.write(html); document.close();
 }
@@ -29,7 +30,7 @@ async function show(key, p) {
   if (saved) {
     try {
       const raw = Uint8Array.from(atob(saved), c => c.charCodeAt(0));
-      return await show(await crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["decrypt"]), p);
+      return await show(await crypto.subtle.importKey("raw", raw, "AES-GCM", true, ["decrypt"]), p);
     } catch (err) { localStorage.removeItem(STORE); }
   }
   document.getElementById("f").onsubmit = async ev => {
